@@ -1,0 +1,35 @@
+<!-- views/results.hbs -->
+
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <title>Word Occurrences</title>
+    <!-- Bootstrap 5 CSS CDN -->
+    <link
+      href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'
+      rel='stylesheet'
+    />
+    <style>
+      /* Custom style for the badge */ .badge-custom { background-color:
+      #f44336; /* Red color, you can change it to your preferred color */ color:
+      #fff; /* White text for better visibility */ font-weight: bold; /* Bold
+      text */ font-size: 1rem; /* Adjust font size as needed */ }
+    </style>
+  </head>
+  <body>
+    <div class='container mt-5'>
+      <h1 class='mb-4'>Word Occurrences</h1>
+      <ul class='list-group'>
+        {{#each words as |word|}}
+          <li
+            class='list-group-item d-flex justify-content-between align-items-center'
+          >
+            {{word.word}}
+            <span class='badge badge-custom rounded-pill'>{{word.count}}</span>
+          </li>
+        {{/each}}
+      </ul>
+    </div>
+  </body>
+</html>
