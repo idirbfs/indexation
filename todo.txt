@@ -1,0 +1,3 @@
+lire tout les documents depuis une racine
+indexer chaque document et mettre dans une BDD
+afficher les indexations
