@@ -18,6 +18,19 @@ __decorate([
     (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.STRING),
     __metadata("design:type", String)
 ], Document.prototype, "titre", void 0);
+__decorate([
+    (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.TEXT),
+    __metadata("design:type", String)
+], Document.prototype, "contenu", void 0);
+__decorate([
+    (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.TEXT),
+    __metadata("design:type", String)
+], Document.prototype, "contenu_lemmatisee", void 0);
+__decorate([
+    sequelize_typescript_1.Unique,
+    (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.STRING),
+    __metadata("design:type", String)
+], Document.prototype, "chemin", void 0);
 exports.Document = Document = __decorate([
     sequelize_typescript_1.Table
 ], Document);
