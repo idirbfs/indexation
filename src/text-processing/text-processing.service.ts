@@ -1,9 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { promises as fsPromisses, createReadStream } from 'fs';
+import { Injectable, Inject } from '@nestjs/common';
+import {
+  promises as fsPromisses,
+  createReadStream,
+  readdirSync,
+  statSync,
+} from 'fs';
 import * as path from 'path';
 import { STOP_WORDS } from 'src/constants/stop-words.constant';
 
 import * as fastCsv from 'fast-csv';
+
+import { Sequelize } from 'sequelize-typescript';
+import { Mot } from '../models/mots.model';
+import { Document } from '../models/documents.model';
+import { Occurrence } from '../models/occurences.model';
 
 interface Lemma {
   ortho: string;
@@ -12,7 +22,16 @@ interface Lemma {
 
 @Injectable()
 export class TextProcessingService {
+  constructor(
+    @Inject('SEQUELIZE')
+    private sequelize: Sequelize,
+  ) {
+    // ...
+  }
+
   async fetchText(): Promise<string> {
+    console.log('fetching text');
+
     const filePath = path.resolve(__dirname, '../../../text/text.txt');
     const text = await fsPromisses.readFile(filePath, 'utf8');
 
@@ -26,8 +45,6 @@ export class TextProcessingService {
 
     //construire un tableau a partir de la chaine
     let transformedText = text.split(/\s+/);
-    console.log(transformedText);
-
     //mettre tout les mots en miniscule
     transformedText = transformedText.map((word) => word.toLowerCase());
 
@@ -48,7 +65,9 @@ export class TextProcessingService {
   }
 
   lemmatizeText(text: string[]): Promise<string[]> {
-    const filePath = path.resolve(__dirname, '../../../src/assets/lemmas.csv');
+    const filePath = path.resolve(
+      '/home/idir/Documents/GitHub/indexation/src/assets/lemmas.csv',
+    );
     const lemmas: Lemma[] = [];
 
     const stream = createReadStream(filePath);
@@ -92,5 +111,90 @@ export class TextProcessingService {
     });
 
     return occurrences;
+  }
+
+  // async indexFilesInDirectory(directoryPath: string): Promise<void> {
+  //   directoryPath = path.resolve(__dirname, directoryPath);
+  //   const files = readdirSync(directoryPath);
+
+  //   for (const file of files) {
+  //     const filePath = `${directoryPath}/${file}`;
+
+  //     if (statSync(filePath).isDirectory()) {
+  //       // Si c'est un dossier, appelle récursivement la fonction pour ce dossier.
+  //       console.log(`Indexing directory: ${filePath}`);
+  //       await this.indexFilesInDirectory(filePath);
+  //     } else if (file.endsWith('.txt')) {
+  //       // Si c'est un fichier txt, effectue ton traitement d'indexation ici.
+  //       console.log(`Indexing file: ${filePath}`);
+  //       // Ajoute ici le code pour l'analyse du fichier txt.
+  //     }
+  //   }
+  // }
+
+  async indexFilesInDirectory(directoryPath: string): Promise<void> {
+    directoryPath = path.resolve(__dirname, directoryPath);
+    const files = readdirSync(directoryPath);
+
+    for (const file of files) {
+      const filePath = `${directoryPath}/${file}`;
+
+      if (statSync(filePath).isDirectory()) {
+        await this.indexFilesInDirectory(filePath);
+      } else if (file.endsWith('.txt')) {
+        const document = await Document.findOne({
+          where: { chemin: filePath },
+        });
+
+        if (!document) {
+          const fileText = await fsPromisses.readFile(filePath, 'utf8');
+
+          const filteredText = await this.filterText(fileText);
+
+          const lemmatizedText = await this.lemmatizeText(filteredText);
+
+          const occurrences = this.countOccurs(lemmatizedText);
+
+          await this.storeDataInDatabase(
+            file,
+            filePath,
+            lemmatizedText,
+            fileText,
+            occurrences,
+          );
+        }
+      }
+    }
+  }
+
+  async storeDataInDatabase(
+    fileName: string,
+    filePath: string,
+    lemmatizedText: string[],
+    text: string,
+    occurrences: { [key: string]: number },
+  ): Promise<void> {
+    try {
+      const [document, createdDocument] = await Document.upsert({
+        titre: fileName,
+        contenu: lemmatizedText.join(' '),
+        contenu_lemmatisee: text,
+        chemin: filePath,
+      });
+
+      if (createdDocument) {
+        for (const [word, count] of Object.entries(occurrences)) {
+          const [mot, createdMot] = await Mot.upsert({ mot: word });
+          await Occurrence.upsert({
+            id_mot: mot.id,
+            id_document: document.id,
+            occurrence: count,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error storing data in the database:', error);
+      throw error;
+    }
   }
 }

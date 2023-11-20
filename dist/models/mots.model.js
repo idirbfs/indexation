@@ -15,6 +15,7 @@ let Mot = class Mot extends sequelize_typescript_1.Model {
 };
 exports.Mot = Mot;
 __decorate([
+    sequelize_typescript_1.Unique,
     (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.STRING),
     __metadata("design:type", String)
 ], Mot.prototype, "mot", void 0);
