@@ -12,18 +12,4 @@ export class AppController {
     @Inject('SEQUELIZE')
     private sequelize: Sequelize,
   ) {}
-
-  // @Get()
-  // getHello(): string {
-  //   return this.appService.getHello();
-  // }
-  @Render('home')
-  @Get()
-  async root() {
-    const words = await Occurrence.findAll({ include: [Mot, Document] });
-    console.log('====================================');
-    console.log(words);
-    console.log('====================================');
-    return { words };
-  }
 }

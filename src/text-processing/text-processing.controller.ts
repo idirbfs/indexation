@@ -1,4 +1,4 @@
-import { Controller, Get, Render } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Render } from '@nestjs/common';
 import { TextProcessingService } from './text-processing.service';
 
 @Controller('text-processing')
@@ -8,6 +8,6 @@ export class TextProcessingController {
   @Get()
   async processTxt() {
     await this.textProcessingService.indexFilesInDirectory('../../docs');
-    return 'ok';
+    return { response: HttpStatus.OK };
   }
 }
